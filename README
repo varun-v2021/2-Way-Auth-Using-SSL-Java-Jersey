@@ -1,0 +1,37 @@
+http://www.opencodez.com/java/implement-2-way-authentication-using-ssl.htm
+https://javapapers.com/java/restful-web-services-with-java-jax-rs-using-jersey/
+####################################################################################
+Below commands will create private and public certificates needed for TLS handshake
+####################################################################################
+mkdir D:\SSL_cert
+cd D:\SSL_cert
+keytool -genkey -alias MyServer -keyalg RSA -validity 1825 -keystore "MyServer.jks" -storetype JKS -dname "CN=myserver.com,OU=My Company Name,O=My Organization,L=My Location,ST=My State,C=My Country Short Code" -keypass password -storepass password
+keytool -exportcert -alias MyServer -keystore MyServer.jks -file MyServer.cer
+keytool -genkey -alias MyClient -keyalg RSA -validity 1825 -keystore MyClient.jks -storetype JKS -dname "CN=client.com,OU=Client Company,O=Client,L=CLient Location,ST=Client State,C=Client Country Short Code" -keypass password -storepass password
+keytool -exportcert -alias MyClient -keystore MyClient.jks -file MyClientPublic.cer
+
+--Add Server certificate to client truststore
+keytool -importcert -alias MyServer -keystore MyClient.jks -file MyServer.cer
+
+--Add client certificate to server truststore
+keytool -importcert -alias MyClient -keystore MyServer.jks -file MyClientPublic.cer
+####################################################################################
+
+1. The HelloWorldService will be started and listens for incoming request on http 8080 port and
+ https 8443 port once the project is deployed on tomcat server
+2. For TLS handshake following contents must be appended in tomcat server.xml and restarted
+
+<Connector port="8443"
+	clientAuth="true"
+	protocol="org.apache.coyote.http11.Http11NioProtocol"
+	SSLEnabled="true"
+	maxThreads="150"
+	scheme="https"
+	secure="true"
+	keystoreFile="D:\SSL_Cert\MyServer.jks"
+	keystorePass="password"
+	truststoreFile="D:\SSL_Cert\MyServer.jks"
+	truststorePass="password"
+	sslProtocol="TLSv1.2" />
+	
+3. Run as java application, HelloWorldSSLClient.java once this project is deployed on the tomcat server
